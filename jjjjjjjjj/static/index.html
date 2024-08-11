@@ -1,0 +1,102 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Products</title>
+</head>
+<body>
+    <div id="productList"></div>
+    <input type="text" id="barcodeInput" placeholder="Scan barcode">
+    <button onclick="submitBill()">Submit Bill</button>
+    <div id="totalCost"></div>
+    <script >
+        
+
+var scannedProducts = [];
+var totalPrice = 0;
+
+document.getElementById("barcodeInput").addEventListener("input", function() {
+    var barcode = this.value;
+    if (barcode.length === 8 && /^\d+$/.test(barcode)) {
+        addProductToBill(barcode);
+        this.value = ''; // Clear input after scanning
+    }
+});
+
+function addProductToBill(barcode) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/add_to_bill", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            var product = JSON.parse(xhr.responseText);
+            var index = scannedProducts.findIndex(p => p.barcode === product.barcode);
+            // if (index !== -1) {
+            //     // Product already exists in scannedProducts array, update its quantity
+            //     scannedProducts[index].quantity++;
+            // } else {
+                // Product doesn't exist in scannedProducts array, add it
+                product.quantity = 1; // Set initial quantity to 1
+                scannedProducts.push(product);
+            // }
+            totalPrice += product.price;
+            displayProduct(product);
+            updateTotal();
+        }
+    };
+    xhr.send(JSON.stringify({ barcode: barcode }));
+}
+
+function displayProduct(product) {
+    var productListDiv = document.getElementById("productList");
+    var productDiv = document.createElement("div");
+    productDiv.innerHTML = `
+        <p>Name: ${product.name}</p>
+        <p>Price: ${product.price}</p>
+        <p>Category: ${product.category}</p>
+        <input type="number" value="1" min="0" id="quantity${scannedProducts.length}" onchange="updateQuantity(${scannedProducts.length})">
+    `;
+    productListDiv.appendChild(productDiv);
+}
+
+function updateQuantity(index) {
+    var quantityy = document.getElementById("quantity" + index).value;
+    console.log(quantityy);
+    scannedProducts[index-1].quantity = quantityy;
+    
+    updateTotal();
+}
+
+function updateTotal() {
+    var totalCost = 0;
+    for (var i = 0; i < scannedProducts.length; i++) {
+        totalCost += scannedProducts[i].price * scannedProducts[i].quantity;
+        console.log(totalCost);
+    }
+    document.getElementById("totalCost").innerText = "Total Cost: " + totalCost;
+}
+// .toFixed(2)
+function submitBill() {
+    // Send scannedProducts array to server to submit the bill
+    // Example code to send the array to the server using AJAX
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/submit_bill", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            // Handle response from server if needed
+            alert("Bill submitted successfully!");
+            // Clear scannedProducts array, totalPrice, and product list on the page
+            scannedProducts = [];
+            totalPrice = 0;
+            document.getElementById("productList").innerHTML = '';
+            document.getElementById("totalCost").innerText = '';
+        }
+    };
+    xhr.send(JSON.stringify({ products: scannedProducts }));
+}
+
+
+    </script>
+</body>
+</html>    
