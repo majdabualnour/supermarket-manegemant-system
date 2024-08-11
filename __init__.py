@@ -405,7 +405,7 @@ def add_bill(conn, date, time, customer_name, total_price, change, discount, pay
 
 appf = Flask(__name__)
 
-appf.secret_key = 'thetopsecretmajd1234'
+appf.secret_key = 'yoursecritkey'
 # db = firestore.client()
 #new 999999999999999999999999999999999999
 
